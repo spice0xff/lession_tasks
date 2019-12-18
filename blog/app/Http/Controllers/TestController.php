@@ -11,6 +11,8 @@ use App\Services\TestOne;
 
 use App\Facades\TestBasicServiceFacade;
 
+use App\Models\Test;
+
 
 class TestController extends Controller
 {
@@ -43,5 +45,19 @@ class TestController extends Controller
         $properties = TestBasicServiceFacade::getProperties();
         $json_response = json_encode($properties);
         echo $json_response;
+    }
+
+    public function getRowById(Request $request)
+    {
+        return Test::getRowById($request->id);
+    }
+    public function getRowByText(Request $request)
+    {
+        return Test::getRowByText($request->text);
+    }
+
+    public function Test200(Request $request)
+    {
+        return response("my first test", 200);
     }
 }

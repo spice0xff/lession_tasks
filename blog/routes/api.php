@@ -23,5 +23,10 @@ Route::group(['prefix' => '/test', 'middleware' => 'apikey'], function () {
     Route::get('/one', 'TestController@getOne');
     // curl -X POST http://192.168.186.135:8001/api/test/one -d "name=Bob&age=44&flag=1"
     Route::post('/one', 'TestController@setOne');
+
+    Route::get('/getRowById/{id}', 'TestController@getRowById');
+    Route::get('/getRowByText/{text}', 'TestController@getRowByText');
+
+    Route::get('/test', 'TestController@Test200');
 });
 
