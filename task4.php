@@ -50,16 +50,20 @@ class Announces extends Publication {
 
 class MysqlConnection {
     private $pdo = null;
+    private $table = null;
+    private $source = null;
 
-    public function __construct() {
+    public function __construct($table, $source) {
         $this->pdo = new PDO("mysql:host=localhost;dbname=my_db", 'spice', 'Spice123');
         $this->pdo->query("set names utf8");
+        $this->table = $table;
+        $this->source = $source;
     }
 
-    public function all($table_name, $column_name) {
+    public function all() {
         $sql = "
-            SELECT title, text, $column_name
-            FROM $table_name;
+            SELECT title, text, $this->source
+            FROM $this->table;
         ";
         $query_result = $this->pdo->query($sql);
 
@@ -67,12 +71,12 @@ class MysqlConnection {
         return $result;
     }
 
-    public function create($table_name, $column_name, $title, $text, $source) {
+    public function create($title, $text, $source) {
         $sql = "
-            INSERT INTO `my_db`.`$table_name` (
+            INSERT INTO `my_db`.`$this->table` (
               `title`,
               `text`,
-              `$column_name`
+              `$this->source`
             )
             VALUES
               (
@@ -87,8 +91,8 @@ class MysqlConnection {
 
 class NewsDB {
     public function all() {
-        $mysql_connection = new MysqlConnection();
-        $query_result = $mysql_connection->all("news", "link");
+        $mysql_connection = new MysqlConnection("news", "link");
+        $query_result = $mysql_connection->all();
         $all_news = [];
         foreach ($query_result as $value) {
             $news = new News($value["title"], $value["text"], $value["link"]);
@@ -98,8 +102,8 @@ class NewsDB {
     }
 
     public function create($title, $text, $source) {
-        $mysql_connection = new MysqlConnection();
-        $mysql_connection->create("news", "link", $title, $text, $source);
+        $mysql_connection = new MysqlConnection("news", "link");
+        $mysql_connection->create($title, $text, $source);
         $news = new News($title, $text, $source);
         return $news;
     }
@@ -107,8 +111,8 @@ class NewsDB {
 
 class AnnouncesDB {
     public function all() {
-        $mysql_connection = new MysqlConnection();
-        $query_result = $mysql_connection->all("announces", "author");
+        $mysql_connection = new MysqlConnection("announces", "author");
+        $query_result = $mysql_connection->all();
         $all_announces = [];
         foreach ($query_result as $value) {
             $announces = new Announces($value["title"], $value["text"], $value["author"]);
@@ -118,8 +122,8 @@ class AnnouncesDB {
     }
 
     public function create($title, $text, $source) {
-        $mysql_connection = new MysqlConnection();
-        $mysql_connection->create("announces", "author", $title, $text, $source);
+        $mysql_connection = new MysqlConnection("announces", "author");
+        $mysql_connection->create($title, $text, $source);
         $announces = new Announces($title, $text, $source);
         return $announces;
     }
@@ -130,8 +134,8 @@ function create_tables() {
     $pdo->query("set names utf8");
 
     $sql = "
-        DROP TABLE `news`;
-        DROP TABLE `announces`;
+        DROP TABLE IF EXISTS `news`;
+        DROP TABLE IF EXISTS `announces`;
     
         CREATE TABLE `news` (
           `id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -162,15 +166,18 @@ function fill_tables() {
     $news_db->create("Заголовок новости1", "Содержимое новости1", "https://ya.ru");
     $news_db->create("Заголовок новости2", "Содержимое новости2", "https://google.ru");
 
+
     $announces_db = new AnnouncesDB();
     $announces_db->create("Заголовок объявления1", "Содержимое объявления1", "Лёня");
     $announces_db->create("Заголовок объявления2", "Содержимое объявления2", "Лёва");
 }
 
 function main() {
+    # Создание и заполнение таблиц.
     create_tables();
     fill_tables();
 
+    # Выборка данных.
     $news_db = new NewsDB();
     $announces_db = new AnnouncesDB();
     $all_publication_list = array_merge(
@@ -178,6 +185,7 @@ function main() {
         $announces_db->all()
     );
 
+    # Вывод данных.
     foreach ($all_publication_list as $publication) {
         echo $publication->getContent();
         echo $publication->getSource();
